@@ -1,32 +1,514 @@
-white/90 backdrop-blur-md flex items-center justify-center text-violet-500 shadow-md hover:scale-110 transition-transform">
-    <i :class="isFavorite(recipe.id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
-</button>
+<!DOCTYPE html>
+<html lang="uk" class="h-full bg-[#F5F7FD]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmakLab — Затишна Кулінарна Майстерня</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paleBlue: {
+                            50: '#F0F6FF',
+                            100: '#E0EDFF',
+                            200: '#C2DCFF',
+                            300: '#99C4FF',
+                            400: '#6FA8FF',
+                            500: '#478CFF',
+                            600: '#256DED',
+                        },
+                        lavender: {
+                            50: '#F7F5FC',
+                            100: '#EAE5F9',
+                            200: '#D5CAF2',
+                            300: '#BFAEEB',
+                            400: '#A48DE2',
+                            500: '#8B6DD7',
+                            600: '#734EC7',
+                            700: '#5E3B9F',
+                            800: '#482B7D',
+                            900: '#321C5B',
+                        },
+                        darkText: '#2D283E',
+                    },
+                    fontFamily: {
+                        title: ['Fredoka', 'Comfortaa', 'cursive', 'sans-serif'],
+                        sans: ['Nunito', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'cozy': '0 12px 32px -8px rgba(115, 78, 199, 0.12), 0 4px 12px -2px rgba(115, 78, 199, 0.05)',
+                        'warm-hover': '0 20px 40px -10px rgba(139, 109, 215, 0.25)',
+                        'inner-soft': 'inset 0 2px 6px 0 rgba(115, 78, 199, 0.06)',
+                    }
+                }
+            }
+        }
+    </script>
 
-<div class="absolute inset-0 bg-gradient-to-t from-indigo-950/60 to-transparent flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-    <span class="text-white text-xs font-bold flex items-center gap-1 font-title">
-        <i class="fa-solid fa-play text-[10px]"></i> Дивитись відео
-    </span>
-</div>
-</div>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
-<div class="p-4 pb-2">
-    <div class="flex items-center justify-between text-xs font-bold text-sky-800 mb-2 font-title">
-        <span class="text-violet-600 bg-sky-50 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-            <i class="fa-regular fa-clock"></i> {{ recipe.prepTime }}
-        </span>
-        <span :class="getDifficultyClass(recipe.difficulty)" class="px-2.5 py-1 rounded-lg">
-            {{ recipe.difficulty }}
-        </span>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            color: #2D283E;
+            background-color: #F5F7FD;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1, h2, h3, .font-title {
+            font-family: 'Fredoka', 'Comfortaa', cursive, sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F5F7FD;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C2DCFF;
+            border-radius: 9999px;
+            border: 2px solid #F5F7FD;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A48DE2;
+        }
+
+        @keyframes floatWarm {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: floatWarm 5s ease-in-out infinite;
+        }
+
+        .gradient-soft-btn {
+            background: linear-gradient(135deg, #8B6DD7 0%, #478CFF 100%);
+        }
+
+        .gradient-soft-btn:hover {
+            background: linear-gradient(135deg, #A48DE2 0%, #6FA8FF 100%);
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col min-h-screen selection:bg-paleBlue-200 selection:text-lavender-900 relative overflow-x-hidden">
+
+    <!-- Soft ambient blurred background shapes -->
+    <div class="fixed top-[-120px] left-[-100px] w-[500px] h-[500px] bg-paleBlue-200/50 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed bottom-[-100px] right-[-100px] w-[450px] h-[450px] bg-lavender-100/60 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div id="app" class="flex-grow flex flex-col min-h-screen relative z-10">
+
+        <!-- Navigation Header -->
+        <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-lavender-100 shadow-sm transition-all">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                
+                <!-- Logo -->
+                <div @click="navigateTo('home')" class="flex items-center gap-3 cursor-pointer group">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-lavender-500 to-paleBlue-400 flex items-center justify-center text-white shadow-md group-hover:rotate-6 transition-transform">
+                        <i class="fa-solid fa-utensils text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl sm:text-3xl font-bold tracking-tight text-lavender-900 font-title group-hover:text-paleBlue-500 transition-colors">
+                            Smak<span class="text-paleBlue-500">Lab</span>
+                        </span>
+                        <span class="hidden sm:flex items-center gap-1 text-xs font-bold text-lavender-600 -mt-1 tracking-wide">
+                            <i class="fa-solid fa-mug-hot text-[10px] text-lavender-400"></i> Затишна Кулінарна Майстерня
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex items-center gap-1 bg-lavender-50/80 p-1.5 rounded-full border border-lavender-100 shadow-inner-soft">
+                    <button @click="navigateTo('home')" 
+                        :class="currentTab === 'home' ? 'bg-white text-lavender-900 shadow-md font-bold' : 'text-lavender-700 hover:text-paleBlue-600 font-semibold'" 
+                        class="px-5 py-2 rounded-full text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-house text-xs text-paleBlue-400"></i>
+                        Головна
+                    </button>
+                    
+                    <button @click="navigateTo('catalog')" 
+                        :class="currentTab === 'catalog' ? 'bg-white text-lavender-900 shadow-md font-bold' : 'text-lavender-700 hover:text-paleBlue-600 font-semibold'" 
+                        class="px-5 py-2 rounded-full text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-xs text-paleBlue-400"></i>
+                        Усі Рецепти
+                    </button>
+
+                    <button @click="navigateTo('favorites')" 
+                        :class="currentTab === 'favorites' ? 'bg-white text-lavender-900 shadow-md font-bold' : 'text-lavender-700 hover:text-paleBlue-600 font-semibold'" 
+                        class="px-5 py-2 rounded-full text-sm transition-all flex items-center gap-2 relative">
+                        <i class="fa-solid fa-heart text-xs text-rose-400"></i>
+                        Улюблені
+                        <span v-if="favorites.length > 0" class="ml-1 px-1.5 py-0.2 bg-rose-500 text-white text-[10px] rounded-full font-bold">
+                            {{ favorites.length }}
+                        </span>
+                    </button>
+
+                    <button @click="navigateTo('progress')" 
+                        :class="currentTab === 'progress' ? 'bg-white text-lavender-900 shadow-md font-bold' : 'text-lavender-700 hover:text-paleBlue-600 font-semibold'" 
+                        class="px-5 py-2 rounded-full text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-award text-xs text-lavender-400"></i>
+                        Мій Прогрес
+                    </button>
+                </nav>
+
+                <!-- Mini Progress Badge -->
+                <div @click="navigateTo('progress')" class="flex items-center gap-3 bg-lavender-50 border border-lavender-200/80 px-4 py-2 rounded-2xl cursor-pointer hover:shadow-md transition-all">
+                    <div class="relative flex items-center justify-center w-8 h-8">
+                        <svg class="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-paleBlue-200" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="text-lavender-500 transition-all duration-700 ease-out" stroke-dasharray="100, 100" :stroke-dashoffset="100 - progressPercentage" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <span class="absolute text-[10px] font-extrabold text-lavender-900 font-title">{{ Math.round(progressPercentage) }}%</span>
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <div class="text-xs font-bold text-lavender-900 font-title">{{ completedLessons.length }} з {{ recipes.length }} освоєно</div>
+                        <div class="text-[11px] text-paleBlue-600 font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-cookie-bite text-[10px]"></i> Ваш рівень
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Mobile Navigation Bar -->
+            <div class="md:hidden flex border-t border-lavender-100 bg-white/95 py-2 px-4 justify-around backdrop-blur-md text-xs font-bold font-title">
+                <button @click="navigateTo('home')" :class="currentTab === 'home' ? 'text-lavender-600 font-extrabold' : 'text-lavender-400'" class="flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-house text-sm"></i>
+                    Головна
+                </button>
+                <button @click="navigateTo('catalog')" :class="currentTab === 'catalog' ? 'text-lavender-600 font-extrabold' : 'text-lavender-400'" class="flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-book-open text-sm"></i>
+                    Рецепти
+                </button>
+                <button @click="navigateTo('favorites')" :class="currentTab === 'favorites' ? 'text-lavender-600 font-extrabold' : 'text-lavender-400'" class="flex flex-col items-center gap-1 relative">
+                    <i class="fa-solid fa-heart text-sm"></i>
+                    Улюблені
+                    <span v-if="favorites.length > 0" class="absolute -top-1 right-2 w-2 h-2 rounded-full bg-rose-500"></span>
+                </button>
+                <button @click="navigateTo('progress')" :class="currentTab === 'progress' ? 'text-lavender-600 font-extrabold' : 'text-lavender-400'" class="flex flex-col items-center gap-1">
+                    <i class="fa-solid fa-award text-sm"></i>
+                    Прогрес
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-grow">
+
+            <section v-if="currentTab === 'home'" class="animate-fadeIn">
+                
+                <!-- Blog Hero Section -->
+                <div class="relative overflow-hidden py-10 lg:py-16">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid lg:grid-cols-12 gap-10 items-center">
+                            
+                            <!-- Hero Text -->
+                            <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paleBlue-100 border border-paleBlue-200 text-lavender-700 text-xs sm:text-sm font-extrabold shadow-sm font-title">
+                                    <i class="fa-solid fa-wheat-awn text-lavender-500"></i> Авторські покрокові майстер-класи
+                                </div>
+                                
+                                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-lavender-900 tracking-tight leading-tight font-title">
+                                    Створюй домашній <span class="text-transparent bg-clip-text bg-gradient-to-r from-lavender-500 to-paleBlue-500">затишок</span> та неймовірний смак! ✨
+                                </h1>
+                                
+                                <p class="text-lavender-700 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                                    Ласкаво просимо до нашого кулінарного блогу-курсу! Навчися готувати духмяні Синнабони, ніжні золотисті Панкейки, справжню Пасту Карбонара та інші класичні страви за простими відеоуроками.
+                                </p>
+                                
+                                <div class="pt-2 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                                    <button @click="navigateTo('catalog')" 
+                                        class="px-8 py-4 rounded-3xl gradient-soft-btn text-white font-extrabold text-lg shadow-cozy hover:shadow-warm-hover active:scale-95 transition-all flex items-center justify-center gap-3 font-title">
+                                        <span>Почати готувати</span>
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                    
+                                    <button @click="navigateTo('progress')" 
+                                        class="px-8 py-4 rounded-3xl bg-white hover:bg-paleBlue-50 border-2 border-paleBlue-200 text-lavender-800 font-extrabold text-lg shadow-cozy active:scale-95 transition-all flex items-center justify-center gap-2 font-title">
+                                        <i class="fa-solid fa-chart-pie text-paleBlue-500"></i>
+                                        Мій прогрес
+                                    </button>
+                                </div>
+
+                                <div class="pt-6 grid grid-cols-3 gap-3 max-w-xl mx-auto lg:mx-0">
+                                    <div class="bg-white/90 p-3.5 rounded-2xl border border-lavender-100 shadow-cozy text-center">
+                                        <div class="text-2xl sm:text-3xl font-extrabold text-lavender-500 font-title">{{ recipes.length }}</div>
+                                        <div class="text-xs text-lavender-600 font-bold">Улюблених страв</div>
+                                    </div>
+                                    <div class="bg-white/90 p-3.5 rounded-2xl border border-lavender-100 shadow-cozy text-center">
+                                        <div class="text-2xl sm:text-3xl font-extrabold text-paleBlue-500 font-title">100%</div>
+                                        <div class="text-xs text-lavender-600 font-bold">Зрозумілі рецепти</div>
+                                    </div>
+                                    <div class="bg-white/90 p-3.5 rounded-2xl border border-lavender-100 shadow-cozy text-center">
+                                        <div class="text-2xl sm:text-3xl font-extrabold text-lavender-500 font-title">HD</div>
+                                        <div class="text-xs text-lavender-600 font-bold">Відеопояснення</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hero Featured Card -->
+                            <div class="lg:col-span-5 relative">
+                                <div class="relative mx-auto max-w-md lg:max-w-none rounded-3xl overflow-hidden shadow-cozy border-4 border-white bg-white group p-2">
+                                    <div class="relative rounded-2xl overflow-hidden">
+                                        <img :src="recipes[0].image" 
+                                             :alt="recipes[0].title" 
+                                             class="w-full h-[360px] sm:h-[400px] object-cover group-hover:scale-105 transition-transform duration-700">
+                                        
+                                        <div class="absolute inset-0 bg-gradient-to-t from-lavender-900/80 via-lavender-900/20 to-transparent flex flex-col justify-end p-6 text-white">
+                                            <div class="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-extrabold text-lavender-900 self-start mb-2 shadow-sm font-title">
+                                                <i class="fa-solid fa-star text-amber-400"></i> Головний Хіт Блогу
+                                            </div>
+                                            <h3 class="text-2xl sm:text-3xl font-extrabold font-title uppercase tracking-wide drop-shadow-md">{{ recipes[0].title }}</h3>
+                                            <p class="text-xs sm:text-sm text-paleBlue-100 mt-1 font-normal line-clamp-2">{{ recipes[0].description }}</p>
+                                            
+                                            <button @click="openRecipe(recipes[0])" class="mt-4 px-6 py-3 rounded-2xl gradient-soft-btn font-extrabold text-sm transition-transform active:scale-95 text-center font-title shadow-md flex items-center justify-center gap-2">
+                                                <span>Переглянути рецепт</span>
+                                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Grid -->
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-lavender-900 font-title">Категорії Меню</h2>
+                            <p class="text-lavender-600 text-sm font-normal mt-1">Обирай страву під свій настрій або час доби</p>
+                        </div>
+                        <button @click="navigateTo('catalog')" class="text-paleBlue-600 hover:text-paleBlue-500 font-extrabold text-sm flex items-center gap-1 font-title">
+                            Усі страви <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                        <div v-for="cat in categories.filter(c => c.id !== 'all')" :key="cat.id" 
+                             @click="filterByCategory(cat.id)"
+                             class="bg-white p-5 rounded-3xl border border-lavender-100 shadow-cozy hover:shadow-warm-hover hover:-translate-y-1 transition-all cursor-pointer group text-center flex flex-col items-center">
+                            <div class="w-16 h-16 rounded-2xl bg-paleBlue-50 group-hover:bg-lavender-100 text-lavender-500 flex items-center justify-center text-3xl mb-3 transition-transform group-hover:scale-110">
+                                <i :class="cat.icon"></i>
+                            </div>
+                            <h3 class="font-extrabold text-lavender-900 group-hover:text-paleBlue-600 transition-colors text-base font-title uppercase">{{ cat.name }}</h3>
+                            <span class="text-xs text-lavender-600 font-semibold mt-1">{{ getCategoryCount(cat.id) }} рецептів</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Catalog Grid -->
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                    <div class="text-center max-w-2xl mx-auto mb-10">
+                        <span class="text-xs font-extrabold uppercase tracking-widest text-paleBlue-500 font-title">Колекція Меню</span>
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-lavender-900 font-title mt-1">Фірмові Страви Курсу</h2>
+                        <p class="text-lavender-700 text-sm mt-2">Кожна страва має докладні інструкції, пропорції та зручні таймери</p>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div v-for="recipe in recipes" :key="recipe.id" 
+                             @click="openRecipe(recipe)"
+                             class="bg-white rounded-3xl p-3 border border-lavender-100 shadow-cozy hover:shadow-warm-hover hover:-translate-y-1.5 transition-all duration-300 cursor-pointer group flex flex-col justify-between">
+                            
+                            <div>
+                                <div class="relative rounded-2xl overflow-hidden h-48">
+                                    <img :src="recipe.image" :alt="recipe.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                    
+                                    <button @click.stop="toggleFavorite(recipe.id)" 
+                                            class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-rose-500 shadow-md hover:scale-110 transition-transform">
+                                        <i :class="isFavorite(recipe.id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                                    </button>
+
+                                    <span v-if="isCompleted(recipe.id)" class="absolute top-3 left-3 bg-emerald-500 text-white px-3 py-1 rounded-full text-[11px] font-extrabold flex items-center gap-1 shadow-md font-title">
+                                        <i class="fa-solid fa-check"></i> Приготовано
+                                    </span>
+                                </div>
+
+                                <div class="p-3">
+                                    <div class="flex items-center justify-between text-xs font-bold text-lavender-600 mb-2 font-title">
+                                        <span class="text-paleBlue-600 bg-paleBlue-50 px-2.5 py-1 rounded-lg">
+                                            <i class="fa-regular fa-clock"></i> {{ recipe.prepTime }}
+                                        </span>
+                                        <span :class="getDifficultyClass(recipe.difficulty)" class="px-2.5 py-1 rounded-lg">
+                                            {{ recipe.difficulty }}
+                                        </span>
+                                    </div>
+
+                                    <h3 class="text-xl font-extrabold text-lavender-900 group-hover:text-paleBlue-500 transition-colors font-title uppercase tracking-wide line-clamp-1">
+                                        {{ recipe.title }}
+                                    </h3>
+
+                                    <p class="text-lavender-700 text-xs mt-1.5 line-clamp-2 font-normal leading-relaxed">
+                                        {{ recipe.description }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="px-3 pb-2 pt-2 border-t border-lavender-50 flex items-center justify-between text-xs font-bold font-title text-paleBlue-600">
+                                <span><i class="fa-solid fa-basket-shopping text-lavender-400 mr-1"></i> {{ recipe.ingredients.length }} складників</span>
+                                <span class="group-hover:translate-x-1 transition-transform">Рецепт <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Catalog View -->
+            <section v-if="currentTab === 'catalog'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
+                <div class="mb-8 text-center sm:text-left">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-paleBlue-100 text-lavender-700 text-xs font-extrabold mb-2 font-title">
+                        <i class="fa-solid fa-book-open"></i> Каталог Курсу
+                    </span>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-lavender-900 font-title uppercase tracking-tight">Усі Страви та Покрокові Рецепти</h1>
+                    <p class="text-lavender-700 text-sm mt-1">Обирайте страву, знайомтеся з інгредієнтами та готуйте із задоволенням</p>
+                </div>
+
+                <!-- Search & Filters Control Panel -->
+                <div class="bg-white p-5 rounded-3xl border border-lavender-100 shadow-cozy mb-8 space-y-5">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-paleBlue-400 text-lg"></i>
+                        <input v-model="searchQuery" type="text" 
+                               placeholder="Пошук за назвою або інгредієнтом..." 
+                               class="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-lavender-100 bg-paleBlue-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-paleBlue-300 text-lavender-900 font-normal text-sm sm:text-base transition-all">
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
     </div>
 
-    <h3 class="text-xl sm:text-2xl font-extrabold text-indigo-950 group-hover:text-sky-500 transition-colors font-title uppercase tracking-wide line-clamp-1 mb-1">
-        {{ recipe.title }}
-    </h3>
+    <script>
+        const { createApp } = Vue;
 
-    <p class="text-sky-900/70 text-sm mt-1.5 line-clamp-2 font-normal leading-relaxed">
-        {{ recipe.description }}
-    </p>
-</div>
-</div>
-
-<div class="px-4 pb-4
+        createApp({
+            data() {
+                return {
+                    currentTab: 'home',
+                    searchQuery: '',
+                    selectedCategory: 'all',
+                    selectedDifficulty: 'all',
+                    favorites: [1, 3],
+                    completedLessons: [1],
+                    categories: [
+                        { id: 'all', name: 'Усі', icon: 'fa-solid fa-utensils' },
+                        { id: 'десерти', name: 'Десерти', icon: 'fa-solid fa-cookie' },
+                        { id: 'сніданки', name: 'Сніданки', icon: 'fa-solid fa-egg' },
+                        { id: 'основне', name: 'Основні страви', icon: 'fa-solid fa-bowl-food' },
+                        { id: 'випічка', name: 'Випічка', icon: 'fa-solid fa-bread-slice' }
+                    ],
+                    recipes: [
+                        {
+                            id: 1,
+                            title: 'Класичні Синнабони',
+                            description: 'Ніжні пухкі булочки з корицею та вершково-сирною глазур\'ю, що тануть у роті.',
+                            prepTime: '45 хв',
+                            difficulty: 'Середньо',
+                            category: 'випічка',
+                            image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+                            ingredients: ['Борошно', 'Кориця', 'Вершковий сир', 'Масло', 'Цукор']
+                        },
+                        {
+                            id: 2,
+                            title: 'Пишні Панкейки',
+                            description: 'Американські оладки з ягідним соусом та кленовим сиропом для ідеального ранку.',
+                            prepTime: '20 хв',
+                            difficulty: 'Легко',
+                            category: 'сніданки',
+                            image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80',
+                            ingredients: ['Борошно', 'Молоко', 'Яйця', 'Ягоди', 'Сироп']
+                        },
+                        {
+                            id: 3,
+                            title: 'Паста Карбонара',
+                            description: 'Справжня італійська класика з гуанчале, жовтками та сиром пекоріно.',
+                            prepTime: '25 хв',
+                            difficulty: 'Середньо',
+                            category: 'основне',
+                            image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=800&q=80',
+                            ingredients: ['Спагеті', 'Гуанчале', 'Яєчні жовтки', 'Пекоріно', 'Перець']
+                        },
+                        {
+                            id: 4,
+                            title: 'Французькі Круасани',
+                            description: 'Хрустке шароване тісто з багатим вершковим ароматом та шоколадною начинкою.',
+                            prepTime: '60 хв',
+                            difficulty: 'Складно',
+                            category: 'випічка',
+                            image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
+                            ingredients: ['Борошно', 'Вершкове масло', 'Дріжджі', 'Шоколад']
+                        }
+                    ]
+                }
+            },
+            computed: {
+                progressPercentage() {
+                    return (this.completedLessons.length / this.recipes.length) * 100;
+                }
+            },
+            methods: {
+                navigateTo(tab) {
+                    this.currentTab = tab;
+                },
+                filterByCategory(catId) {
+                    this.selectedCategory = catId;
+                    this.currentTab = 'catalog';
+                },
+                getCategoryCount(catId) {
+                    return this.recipes.filter(r => r.category === catId).length;
+                },
+                isFavorite(id) {
+                    return this.favorites.includes(id);
+                },
+                toggleFavorite(id) {
+                    if (this.isFavorite(id)) {
+                        this.favorites = this.favorites.filter(favId => favId !== id);
+                    } else {
+                        this.favorites.push(id);
+                    }
+                },
+                isCompleted(id) {
+                    return this.completedLessons.includes(id);
+                },
+                openRecipe(recipe) {
+                    alert('Відкриваємо рецепт: ' + recipe.title);
+                },
+                getDifficultyClass(diff) {
+                    switch(diff) {
+                        case 'Легко': return 'bg-emerald-100 text-emerald-800';
+                        case 'Середньо': return 'bg-paleBlue-100 text-paleBlue-800';
+                        case 'Складно': return 'bg-lavender-100 text-lavender-800';
+                        default: return 'bg-gray-100 text-gray-800';
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
